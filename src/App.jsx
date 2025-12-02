@@ -261,7 +261,7 @@ export default function AIChatbotStation() {
   const [lastGeneratedImage, setLastGeneratedImage] = useState(null);
   const scrollRef = useRef(null);
 
-  const apiKey = "AIzaSyCWukLYbTteIvITZ5-VU3zOtuNaVNGnQw4";
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   const bot = AI_PERSONAS.find(p => p.id === activeBotId) || AI_PERSONAS[0];
 
