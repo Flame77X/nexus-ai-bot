@@ -320,12 +320,13 @@ export default function AIChatbotStation() {
     }
 
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+      // Reverting to gemini-1.5-flash with the new key
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: userText }] }],
-          systemInstruction: { parts: [{ text: systemPrompt }] }, // Note: gemini-pro might not support systemInstruction in v1beta the same way, but let's try. Actually, gemini-pro v1beta supports it.
+          contents: [{ role: "user", parts: [{ text: userText }] }],
+          systemInstruction: { parts: [{ text: systemPrompt }] },
           generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
         })
       });
@@ -337,7 +338,23 @@ export default function AIChatbotStation() {
     } catch (err) {
       console.error(err);
       setIsOffline(true);
-      return `Error: ${err.message || "Connection failed"}. (Check Console)`;
+
+      try {
+        // DIAGNOSTIC: Check if API key is valid and list models
+        const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        const listData = await listRes.json();
+
+        if (!listRes.ok) {
+          return `API Key Error: ${listData.error?.message || listRes.status}`;
+        }
+
+        const models = listData.models?.map(m => m.name.replace('models/', '')).filter(n => n.includes('gemini'));
+        const suggested = models?.find(n => n.includes('1.5-flash')) || models?.[0] || "None";
+
+        return `Error 404. Your Key works! Available: ${suggested}. (Update code to use this)`;
+      } catch (e) {
+        return `Connection Error: Check internet or API Key. (${err.message})`;
+      }
     } finally {
       setIsTyping(false);
     }
@@ -449,7 +466,7 @@ export default function AIChatbotStation() {
               <div className="flex items-center gap-3">
                 <button onClick={() => setMobileMenuOpen(true)} className="md:hidden p-2 -ml-2 hover:bg-white/5 rounded-lg"><Icons.Menu className="w-6 h-6" /></button>
                 <div className={`w-2 h-2 rounded-full ${isOffline ? 'bg-red-500' : 'bg-green-500'} animate-pulse shadow-[0_0_10px_#22c55e]`}></div>
-                <span className="text-sm font-bold text-slate-200 tracking-wide">{isOffline ? 'OFFLINE MODE (v2.0)' : 'SYSTEM ONLINE (v2.0)'}</span>
+                <span className="text-sm font-bold text-slate-200 tracking-wide">{isOffline ? 'OFFLINE MODE (v2.2)' : 'SYSTEM ONLINE (v2.2)'}</span>
               </div>
               <div className="flex items-center gap-4">
                 <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full">
