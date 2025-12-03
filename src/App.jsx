@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
-import JarvisMode from './JarvisMode';
 
 // ==========================================
 // FALLBACK DATABASE (OFFLINE SAFETY NET)
@@ -268,7 +267,6 @@ export default function AIChatbotStation() {
   const [isListening, setIsListening] = useState(false);
   const [speakingMsgId, setSpeakingMsgId] = useState(null);
   const [lastGeneratedImage, setLastGeneratedImage] = useState(null);
-  const [isJarvisActive, setIsJarvisActive] = useState(false);
   const scrollRef = useRef(null);
 
   // API Key is now handled by the Python Backend (server.py)
@@ -412,14 +410,6 @@ export default function AIChatbotStation() {
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden bg-slate-950 text-white font-sans selection:bg-blue-500/30">
       <Styles />
-      {isJarvisActive && (
-        <JarvisMode
-          onClose={() => setIsJarvisActive(false)}
-          onSend={handleSend}
-          isSpeaking={!!speakingMsgId}
-          lastBotMessage={messages.filter(m => m.role === 'bot').slice(-1)[0]?.content}
-        />
-      )}
       <PhysicsBackground gravityEnabled={gravityEnabled} />
 
       {!user ? (
@@ -472,16 +462,6 @@ export default function AIChatbotStation() {
               <div className={`w-8 h-4 rounded-full relative transition-colors ${gravityEnabled ? 'bg-purple-500' : 'bg-slate-600'}`}>
                 <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${gravityEnabled ? 'left-4.5' : 'left-0.5'}`} style={{ left: gravityEnabled ? '18px' : '2px' }} />
               </div>
-            </button>
-
-            <button onClick={() => setIsJarvisActive(true)} className="w-full p-4 rounded-xl flex items-center justify-between border bg-cyan-900/20 border-cyan-500/30 hover:bg-cyan-900/40 transition-all mt-3 group">
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 bg-cyan-500/20 rounded-lg group-hover:animate-pulse">
-                  <Icons.Mic className="w-5 h-5 text-cyan-400" />
-                </div>
-                <span className="text-sm font-bold text-cyan-100">Jarvis Mode</span>
-              </div>
-              <div className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded border border-cyan-500/30">BETA</div>
             </button>
           </div>
 
