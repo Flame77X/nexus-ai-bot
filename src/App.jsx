@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
-import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
 import JarvisMode from './JarvisMode';
 
