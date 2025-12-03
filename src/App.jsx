@@ -30,7 +30,9 @@ const Icons = {
   X: memo(({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>),
   Mic: memo(({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" /></svg>),
   Volume2: memo(({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>),
-  Info: memo(({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>)
+  Info: memo(({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>),
+  Zap: memo(({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>),
+  Trophy: memo(({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg>)
 };
 
 // ==========================================
@@ -118,15 +120,16 @@ const PhysicsBackground = ({ gravityEnabled }) => {
   const canvasRef = useRef(null);
   const elementsRef = useRef([]);
   const mouseRef = useRef({ x: -9999, y: -9999, active: false });
-  const animRef = useRef();
+  const particlesRef = useRef([]); // For click bursts
 
   useEffect(() => {
-    const colors = ['rgba(56,189,248,0.4)', 'rgba(168,85,247,0.4)', 'rgba(52,211,153,0.4)', 'rgba(255,255,255,0.1)'];
-    elementsRef.current = Array.from({ length: 25 }).map(() => ({
+    const colors = ['#38bdf8', '#a855f7', '#34d399', '#f472b6'];
+    elementsRef.current = Array.from({ length: 40 }).map(() => ({
       x: Math.random() * innerWidth, y: Math.random() * innerHeight,
-      vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2,
-      size: Math.random() * 40 + 15, color: colors[Math.floor(Math.random() * colors.length)],
-      rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.05
+      vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5,
+      size: Math.random() * 3 + 1,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      baseX: Math.random() * innerWidth, baseY: Math.random() * innerHeight,
     }));
 
     const onResize = () => { if (canvasRef.current) { canvasRef.current.width = innerWidth; canvasRef.current.height = innerHeight; } };
@@ -140,52 +143,76 @@ const PhysicsBackground = ({ gravityEnabled }) => {
 
     const step = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Mouse Trail / Spotlight
       if (mouseRef.current.active) {
-        const gradient = ctx.createRadialGradient(mouseRef.current.x, mouseRef.current.y, 0, mouseRef.current.x, mouseRef.current.y, 150);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        const gradient = ctx.createRadialGradient(mouseRef.current.x, mouseRef.current.y, 0, mouseRef.current.x, mouseRef.current.y, 300);
+        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.15)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = gradient;
-        ctx.beginPath(); ctx.arc(mouseRef.current.x, mouseRef.current.y, 150, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(mouseRef.current.x, mouseRef.current.y, 300, 0, Math.PI * 2); ctx.fill();
       }
 
-      elementsRef.current.forEach(el => {
-        if (gravityEnabled) { el.vy -= 0.4; el.vx *= 0.98; }
-        else { el.vy *= 0.95; el.vx *= 0.95; el.y += Math.sin(Date.now() * 0.001 + el.x) * 0.15; }
-
-        const dx = el.x - mouseRef.current.x; const dy = el.y - mouseRef.current.y; const dist = Math.hypot(dx, dy);
-        if (dist < 150) {
-          const force = (150 - dist) * 0.08;
-          const angle = Math.atan2(dy, dx);
-          el.vx += Math.cos(angle) * force; el.vy += Math.sin(angle) * force;
+      // Floating Nodes
+      elementsRef.current.forEach((el, i) => {
+        if (gravityEnabled) {
+          el.vy += 0.1;
+          el.y += el.vy;
+          if (el.y > canvas.height) { el.y = canvas.height; el.vy *= -0.5; }
+        } else {
+          el.x += el.vx; el.y += el.vy;
+          if (el.x < 0 || el.x > canvas.width) el.vx *= -1;
+          if (el.y < 0 || el.y > canvas.height) el.vy *= -1;
         }
 
-        el.x += el.vx; el.y += el.vy; el.rotation += el.rotSpeed; el.rotSpeed *= 0.98;
+        // Connect to mouse
+        const dx = mouseRef.current.x - el.x;
+        const dy = mouseRef.current.y - el.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 200) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(56, 189, 248, ${1 - dist / 200})`;
+          ctx.lineWidth = 0.5;
+          ctx.moveTo(el.x, el.y);
+          ctx.lineTo(mouseRef.current.x, mouseRef.current.y);
+          ctx.stroke();
+        }
 
-        if (el.y < 0 || el.y > canvas.height) el.vy *= -0.7;
-        if (el.x < 0 || el.x > canvas.width) el.vx *= -0.7;
-        el.x = Math.max(0, Math.min(canvas.width, el.x));
-        el.y = Math.max(0, Math.min(canvas.height, el.y));
-
-        ctx.save(); ctx.translate(el.x, el.y); ctx.rotate(el.rotation);
-        ctx.fillStyle = el.color; ctx.beginPath();
-        const s = el.size / 2;
-        ctx.moveTo(-s + 10, -s); ctx.lineTo(s - 10, -s); ctx.quadraticCurveTo(s, -s, s, -s + 10);
-        ctx.lineTo(s, s - 10); ctx.quadraticCurveTo(s, s, s - 10, s);
-        ctx.lineTo(-s + 10, s); ctx.quadraticCurveTo(-s, s, -s, s - 10);
-        ctx.lineTo(-s, -s + 10); ctx.quadraticCurveTo(-s, -s, -s + 10, -s);
-        ctx.fill(); ctx.restore();
+        ctx.fillStyle = el.color;
+        ctx.beginPath(); ctx.arc(el.x, el.y, el.size, 0, Math.PI * 2); ctx.fill();
       });
-      animRef.current = requestAnimationFrame(step);
+
+      // Click Burst Particles
+      particlesRef.current.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+        ctx.fillStyle = `rgba(255, 255, 255, ${p.life})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+        if (p.life <= 0) particlesRef.current.splice(i, 1);
+      });
+
+      requestAnimationFrame(step);
     };
-    animRef.current = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(animRef.current);
+    step();
   }, [gravityEnabled]);
+
+  const handleClick = (e) => {
+    for (let i = 0; i < 10; i++) {
+      particlesRef.current.push({
+        x: e.clientX, y: e.clientY,
+        vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
+        life: 1, size: Math.random() * 3
+      });
+    }
+  };
 
   useEffect(() => {
     const onMove = (e) => { mouseRef.current.x = e.clientX; mouseRef.current.y = e.clientY; mouseRef.current.active = true; };
-    const onLeave = () => { mouseRef.current.active = false; };
-    window.addEventListener('mousemove', onMove); window.addEventListener('mouseleave', onLeave);
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseleave', onLeave); };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('click', handleClick);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('click', handleClick);
+    };
   }, []);
 
   return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />;
@@ -204,6 +231,61 @@ const Typewriter = ({ text }) => {
   return <span>{d}</span>;
 };
 
+const Dashboard = ({ user, bot, onQuickAction, xp, level }) => {
+  const suggestions = [
+    { icon: Icons.Zap, label: `Explain ${user.subject} Basics`, prompt: `Explain the basics of ${user.subject} to me like I'm a beginner.` },
+    { icon: Icons.Bot, label: "Quiz Me!", prompt: `Give me a short quiz about ${user.subject}.` },
+    { icon: Icons.BookOpen, label: "Study Tips", prompt: "Give me 3 effective study tips for this subject." }
+  ];
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-entrance">
+      <div className="relative mb-8 group">
+        <div className={`absolute inset-0 bg-gradient-to-r ${bot.gradient} blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-500`} />
+        <div className="relative w-32 h-32 glass-panel rounded-full flex items-center justify-center border border-white/10 shadow-2xl animate-float">
+          <bot.icon className={`w-16 h-16 ${bot.textHighlight} drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]`} />
+        </div>
+        <div className="absolute -bottom-2 -right-2 bg-slate-900 border border-white/10 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+          <Icons.Trophy className="w-3 h-3 text-yellow-400" />
+          <span className="text-yellow-100">Lvl {level}</span>
+        </div>
+      </div>
+
+      <h2 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+        Welcome back, {user.name}
+      </h2>
+      <p className="text-slate-400 mb-8 max-w-md">
+        Ready to master <strong>{user.subject}</strong>? I'm standing by.
+      </p>
+
+      {/* XP BAR */}
+      <div className="w-full max-w-xs mb-10">
+        <div className="flex justify-between text-xs text-slate-400 mb-1">
+          <span>XP Progress</span>
+          <span>{xp} / 100</span>
+        </div>
+        <div className="h-2 bg-slate-800 rounded-full overflow-hidden border border-white/5">
+          <div className={`h-full bg-gradient-to-r ${bot.gradient} transition-all duration-1000 ease-out`} style={{ width: `${xp}%` }} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-2xl">
+        {suggestions.map((s, i) => (
+          <button
+            key={i}
+            onClick={() => onQuickAction(s.prompt)}
+            className="glass-panel p-4 rounded-2xl border border-white/5 hover:border-white/20 hover:bg-white/5 transition-all duration-300 group text-left flex flex-col gap-3"
+          >
+            <div className={`p-2 rounded-lg bg-white/5 w-fit group-hover:scale-110 transition-transform duration-300 ${bot.textHighlight}`}>
+              <s.icon className="w-5 h-5" />
+            </div>
+            <span className="font-medium text-slate-200 group-hover:text-white">{s.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
 const Onboarding = ({ onComplete }) => {
   const [name, setName] = useState('');
   const [subject, setSubject] = useState('');
@@ -241,16 +323,62 @@ const Onboarding = ({ onComplete }) => {
 const Styles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Space Grotesk', sans-serif; }
-    .glass-panel { background: rgba(17, 25, 40, 0.75); backdrop-filter: blur(14px) saturate(160%); border: 1px solid rgba(255,255,255,0.08); }
-    .custom-scroll::-webkit-scrollbar { width: 6px; } .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 10px; }
-    @keyframes entrance { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-    .animate-entrance { animation: entrance 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-    .animate-bounce-slow { animation: float 3s ease-in-out infinite; }
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+    
+    body { font-family: 'Outfit', sans-serif; background: #020617; }
+    
+    /* GLASSMORPHISM - ULTRA TRANSPARENT */
+    .glass-panel { 
+      background: rgba(15, 23, 42, 0.15); 
+      backdrop-filter: blur(8px) saturate(180%); 
+      border: 1px solid rgba(255, 255, 255, 0.08); 
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* CLEAN BORDERS (NO NEON) */
+    .neon-border {
+      border-color: rgba(255, 255, 255, 0.15);
+      transition: all 0.3s ease;
+    }
+    .neon-border:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .neon-text {
+      /* No text shadow */
+    }
+
+    /* SCROLLBAR */
+    .custom-scroll::-webkit-scrollbar { width: 4px; } 
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+    /* ANIMATIONS */
+    @keyframes entrance { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .animate-entrance { animation: entrance 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+    
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .animate-float { animation: float 4s ease-in-out infinite; }
+
+    @keyframes pulse-glow { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
+    .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+    @keyframes glitch {
+      0% { transform: translate(0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0); }
+    }
+    .glitch-hover:hover { animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite; }
+
     .perspective-1000 { perspective: 1000px; }
   `}</style>
 );
+
 
 // ==========================================
 // MAIN APP
@@ -267,6 +395,8 @@ export default function AIChatbotStation() {
   const [isListening, setIsListening] = useState(false);
   const [speakingMsgId, setSpeakingMsgId] = useState(null);
   const [lastGeneratedImage, setLastGeneratedImage] = useState(null);
+  const [xp, setXp] = useState(0);
+  const [level, setLevel] = useState(1);
   const scrollRef = useRef(null);
 
   // EMERGENCY FIX: Obfuscating key to bypass GitHub/Google auto-revocation
@@ -279,7 +409,7 @@ export default function AIChatbotStation() {
 
   const handleLogin = (name, subject) => {
     setUser({ name, subject });
-    setMessages([{ id: 'welcome', role: 'bot', content: `Welcome ${name}! Ready to explore ${subject}? Type anything or ask for a diagram!`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+    // Removed auto-welcome message to show Dashboard first
   };
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages, isTyping]);
@@ -328,12 +458,12 @@ export default function AIChatbotStation() {
     let systemPrompt = `${bot.systemPrompt} Student: ${user.name}, Subject: ${user.subject}. Keep answers short and clear.`;
 
     if (lastGeneratedImage && /describe|explain|this|image/i.test(userText)) {
-      systemPrompt += ` The student just saw a diagram of "${lastGeneratedImage}". Explain it.`;
+      systemPrompt += ` The student just saw a diagram of "${lastGeneratedImage}".Explain it.`;
     }
 
     try {
-      // Switching to gemini-2.0-flash (Stable)
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      // Switching to gemini-1.5-flash (Stable)
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -408,6 +538,15 @@ export default function AIChatbotStation() {
     const reply = await callGeminiAPI(txt);
 
     setMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', content: reply, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+    // XP Logic
+    setXp(prev => {
+      const newXp = prev + 10;
+      if (newXp >= 100) {
+        setLevel(l => l + 1);
+        return 0; // Reset XP for next level
+      }
+      return newXp;
+    });
     setIsTyping(false);
   };
 
@@ -421,7 +560,7 @@ export default function AIChatbotStation() {
       ) : (
         <div className="relative z-10 w-full h-full flex flex-col md:flex-row p-4 md:p-6 gap-4">
           {/* SIDEBAR */}
-          <div className={`fixed inset-y-0 left-0 w-80 bg-slate-900/95 backdrop-blur-xl border-r border-white/10 p-6 shadow-2xl z-40 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:bg-slate-900/60 md:md:border md:rounded-3xl md:flex md:flex-col ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className={`fixed inset-y-0 left-0 w-80 glass-panel neon-border border-r border-white/10 p-6 shadow-2xl z-40 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:bg-transparent md:border md:rounded-3xl md:flex md:flex-col ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
             <div className="mb-6 flex justify-between items-start">
               <div>
                 <h1 className="text-2xl font-bold flex items-center gap-3">
@@ -473,7 +612,7 @@ export default function AIChatbotStation() {
           {mobileMenuOpen && <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 md:hidden" onClick={() => setMobileMenuOpen(false)} />}
 
           {/* CHAT AREA */}
-          <div className="flex-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-3xl flex flex-col relative overflow-hidden shadow-2xl z-20">
+          <div className="flex-1 glass-panel neon-border border border-white/10 rounded-3xl flex flex-col relative overflow-hidden shadow-2xl z-20">
             <div className="h-16 border-b border-white/5 flex items-center justify-between px-4 md:px-8">
               <div className="flex items-center gap-3">
                 <button onClick={() => setMobileMenuOpen(true)} className="md:hidden p-2 -ml-2 hover:bg-white/5 rounded-lg"><Icons.Menu className="w-6 h-6" /></button>
@@ -490,39 +629,45 @@ export default function AIChatbotStation() {
             </div>
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 scrollbar-hide">
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`flex max-w-[80%] gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${msg.role === 'user' ? 'bg-blue-600' : 'bg-indigo-600'}`}>
-                      {msg.role === 'user' ? <Icons.User className="w-4 h-4" /> : <Icons.Bot className="w-5 h-5" />}
-                    </div>
-                    <div className={`px-5 py-3 rounded-2xl border relative group ${msg.role === 'user' ? 'bg-blue-600/20 border-blue-500/30 text-blue-100 rounded-tr-none' : 'bg-slate-800/80 border-white/10 text-slate-100 rounded-tl-none'}`}>
-                      <div className="text-sm leading-relaxed">
-                        {msg.role === 'bot' ? <MarkdownRenderer content={msg.content} /> : msg.content}
+              {messages.length === 0 ? (
+                <Dashboard user={user} bot={bot} onQuickAction={(txt) => handleSend(null, txt)} xp={xp} level={level} />
+              ) : (
+                <>
+                  {messages.map((msg) => (
+                    <div key={msg.id} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`flex max-w-[80%] gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${msg.role === 'user' ? 'bg-blue-600' : 'bg-indigo-600'}`}>
+                          {msg.role === 'user' ? <Icons.User className="w-4 h-4" /> : <Icons.Bot className="w-5 h-5" />}
+                        </div>
+                        <div className={`px-5 py-3 rounded-2xl border relative group animate-float ${msg.role === 'user' ? 'bg-blue-600/20 border-blue-500/30 text-blue-100 rounded-tr-none' : 'glass-panel neon-border border-white/10 text-slate-100 rounded-tl-none'}`}>
+                          <div className="text-sm leading-relaxed">
+                            {msg.role === 'bot' ? <MarkdownRenderer content={msg.content} /> : msg.content}
+                          </div>
+                          <div className="flex items-center justify-between mt-1">
+                            <div className="text-[9px] opacity-40">{msg.timestamp}</div>
+                            {msg.role === 'bot' && (
+                              <button onClick={() => speakResponse(msg.content, msg.id)} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-full ml-2" title={speakingMsgId === msg.id ? "Stop" : "Read Aloud"}>
+                                {speakingMsgId === msg.id ? <div className="w-3 h-3 bg-red-400 rounded-sm animate-pulse" /> : <Icons.Volume2 className="w-3 h-3 text-slate-400 hover:text-white" />}
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <div className="text-[9px] opacity-40">{msg.timestamp}</div>
-                        {msg.role === 'bot' && (
-                          <button onClick={() => speakResponse(msg.content, msg.id)} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-full ml-2" title={speakingMsgId === msg.id ? "Stop" : "Read Aloud"}>
-                            {speakingMsgId === msg.id ? <div className="w-3 h-3 bg-red-400 rounded-sm animate-pulse" /> : <Icons.Volume2 className="w-3 h-3 text-slate-400 hover:text-white" />}
-                          </button>
-                        )}
+                    </div>
+                  ))}
+                  {isTyping && (
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center"><Icons.Bot className="w-5 h-5" /></div>
+                      <div className="bg-slate-800/80 px-4 py-3 rounded-2xl rounded-tl-none flex gap-1 items-center">
+                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" />
+                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-100" />
+                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-200" />
                       </div>
                     </div>
-                  </div>
-                </div>
-              ))}
-              {isTyping && (
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center"><Icons.Bot className="w-5 h-5" /></div>
-                  <div className="bg-slate-800/80 px-4 py-3 rounded-2xl rounded-tl-none flex gap-1 items-center">
-                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" />
-                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-100" />
-                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-200" />
-                  </div>
-                </div>
+                  )}
+                  <div className="h-2" />
+                </>
               )}
-              <div className="h-2" />
             </div>
 
             <div className="p-6 pt-0">
@@ -532,7 +677,7 @@ export default function AIChatbotStation() {
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   placeholder={`Ask ${bot.name} something...`}
-                  className="w-full bg-slate-950/50 border border-white/10 rounded-full px-6 py-4 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                  className="w-full glass-panel neon-border border border-white/10 rounded-full px-6 py-4 focus:outline-none focus:border-blue-500 transition-colors text-sm text-white placeholder-slate-400"
                 />
                 <button type="button" onClick={handleVoiceInput} className={`absolute right-12 top-2 p-2 rounded-full transition-all ${isListening ? 'bg-red-500 animate-pulse text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}>
                   <Icons.Mic className="w-5 h-5" />
