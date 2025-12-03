@@ -269,9 +269,8 @@ export default function AIChatbotStation() {
   const [lastGeneratedImage, setLastGeneratedImage] = useState(null);
   const scrollRef = useRef(null);
 
-  // TEMPORARY DEBUG: Hardcoded key to rule out .env issues
-  const apiKey = "AIzaSyB_DR_MqGNLecdZLK4TssQW7MtwPovUwiY";
-  // const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  // Using secure environment variable
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   const bot = AI_PERSONAS.find(p => p.id === activeBotId) || AI_PERSONAS[0];
 
@@ -476,7 +475,7 @@ export default function AIChatbotStation() {
               <div className="flex items-center gap-3">
                 <button onClick={() => setMobileMenuOpen(true)} className="md:hidden p-2 -ml-2 hover:bg-white/5 rounded-lg"><Icons.Menu className="w-6 h-6" /></button>
                 <div className={`w-2 h-2 rounded-full ${isOffline ? 'bg-red-500' : 'bg-green-500'} animate-pulse shadow-[0_0_10px_#22c55e]`}></div>
-                <span className="text-sm font-bold text-slate-200 tracking-wide">{isOffline ? 'OFFLINE MODE (v2.7)' : 'SYSTEM ONLINE (v2.7)'}</span>
+                <span className="text-sm font-bold text-slate-200 tracking-wide">{isOffline ? 'OFFLINE MODE (v2.8)' : 'SYSTEM ONLINE (v2.8)'}</span>
               </div>
               <div className="flex items-center gap-4">
                 <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full">
