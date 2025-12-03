@@ -331,22 +331,26 @@ l0,-`+(n+144)+`c-2,-159.3,-10,-310.7,-24,-454c-53.3,-528,-210,-949.7,
     
     body { font-family: 'Outfit', sans-serif; background: #020617; }
     
-    /* GLASSMORPHISM */
+    /* GLASSMORPHISM - ULTRA TRANSPARENT */
     .glass-panel { 
-      background: rgba(15, 23, 42, 0.25); 
-      backdrop-filter: blur(12px) saturate(180%); 
+      background: rgba(15, 23, 42, 0.15); 
+      backdrop-filter: blur(8px) saturate(180%); 
       border: 1px solid rgba(255, 255, 255, 0.08); 
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     }
     
-    /* NEON GLOWS */
+    /* CLEAN BORDERS (NO NEON) */
     .neon-border {
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.3), inset 0 0 5px rgba(56, 189, 248, 0.1);
-      border-color: rgba(56, 189, 248, 0.4);
+      border-color: rgba(255, 255, 255, 0.15);
+      transition: all 0.3s ease;
+    }
+    .neon-border:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.05);
     }
     
     .neon-text {
-      text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+      /* No text shadow */
     }
 
     /* SCROLLBAR */
