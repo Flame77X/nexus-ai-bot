@@ -333,8 +333,8 @@ l0,-`+(n+144)+`c-2,-159.3,-10,-310.7,-24,-454c-53.3,-528,-210,-949.7,
     
     /* GLASSMORPHISM */
     .glass-panel { 
-      background: rgba(15, 23, 42, 0.6); 
-      backdrop-filter: blur(20px) saturate(180%); 
+      background: rgba(15, 23, 42, 0.25); 
+      backdrop-filter: blur(12px) saturate(180%); 
       border: 1px solid rgba(255, 255, 255, 0.08); 
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
